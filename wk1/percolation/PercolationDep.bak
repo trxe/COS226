@@ -1,0 +1,196 @@
+public class Percolation {
+
+    private Box first = new Box(0, 0);
+    private Box last;
+    private Box[][] grid;
+    private int n;
+    private int openSites = 0;
+
+    private class Box {
+        Box parent;
+        int row;
+        int col;
+        int size;
+        boolean isOpen;
+
+        Box(int row, int col) {
+            this.row = row;
+            this.col = col;
+            this.size = 0;
+            this.isOpen = false;
+        }
+
+        void setParent(Box p) {
+            this.parent = p;
+        }
+
+        void open() {
+            if (!isOpen) {
+                parent = this;
+                this.isOpen = true;
+                size += 1;
+                openSites++;
+            }
+        }
+
+        void union(Box other) {
+            if (other.isOpen && this.isOpen) {
+                Box pRoot = this.root();
+                Box qRoot = other.root();
+                if (qRoot.size < pRoot.size) {
+                    qRoot.setParent(pRoot); // works cos references
+                    pRoot.size += qRoot.size;
+                } else {
+                    pRoot.setParent(qRoot); // works cos references
+                    qRoot.size += pRoot.size;
+                }
+                //System.out.printf("%s -- %s: success!\n", this, other);
+            }
+        }
+
+        boolean connected(Box other) {
+            if (other.root() == null || this.root() == null) {
+                return false;
+            }
+            return other.root().equals(this.root());
+        }
+
+        Box root() {
+            Box p = this.parent;
+            int r = this.row;
+            int c = this.col;
+            while (p != null && (p.row != r || p.col != c)) {
+                p = p.parent;
+                r = p.row;
+                c = p.col;
+            }
+            return p;
+        }
+
+        @Override
+        public boolean equals(Object node) {
+            if (node == this) {
+                return true;
+            } else if (node instanceof Box) {
+                Box boxNode = (Box) node;
+                return boxNode.row == this.row && boxNode.col == this.col;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "(" + row + ", " + col + ")";
+        }
+    }
+
+    // creates n-by-n grid, with all sites initially blocked
+    public Percolation(int n) {
+        if (n <= 0) {
+            throw new IllegalArgumentException();
+        }
+        this.last = new Box(n+1, 0);
+        first.open();
+        last.open();
+        this.n = n;
+        openSites = 0;
+        this.grid = new Box[n+1][n+1];
+        for (int r = 1; r <= n; r++) {
+            for (int c = 1; c <= n; c++) {
+                grid[r][c] = new Box(r, c);
+            }
+        }
+    }
+
+    // opens the site (row, col) if it is not open already
+    public void open(int row, int col) {
+        if (!inRange(row, col)) {
+            System.out.print(row + " " + col);
+            throw new IllegalArgumentException();
+        }
+        Box now = grid[row][col];
+        now.open();
+        if (inRange(row-1)) {
+            grid[row - 1][col].union(now);
+        } else if (row == 1) {
+            first.union(now);
+        }
+
+        if (inRange(row+1)) {
+            grid[row + 1][col].union(now);
+        } else if (row == n) {
+            last.union(now);
+        }
+
+        if (inRange(col-1)) {
+            grid[row][col - 1].union(now);
+        }
+        if (inRange(col+1)) {
+            grid[row][col + 1].union(now);
+        }
+    }
+
+    // is the site (row, col) open?
+    public boolean isOpen(int row, int col) {
+        if (inRange(row, col)) {
+            return grid[row][col].isOpen;
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    // is the site (row, col) full?
+    public boolean isFull(int row, int col) {
+        if (inRange(row, col)) {
+            return first.connected(grid[row][col]);
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    // returns the number of open sites
+    public int numberOfOpenSites() {
+        return openSites;
+    }
+
+    // does the system percolate?
+    public boolean percolates() {
+        return first.connected(last);
+    }
+
+    // printing information
+    public void printPerc() {
+        System.out.printf("%d by %d grid: %s ", n, n, (this.percolates() ? "perc" : "no perc"));
+        System.out.print("(open sites: " + openSites + ")\n");
+    }
+
+    // print diagram
+    public void printAll() {
+        String output = "";
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (grid[i][j].isOpen) {
+                    output += " x ";
+                } else {
+                    output += "   ";
+                }
+            }
+            output += "\n";
+        }
+        System.out.print(output);
+    }
+
+    private boolean inRange(int k) {
+        return k >= 1 && k <= n;
+    }
+
+    private boolean inRange(int row, int col) {
+        return inRange(row) && inRange(col);
+    }
+
+    // test client (optional)
+    public static void main(String[] args) {
+        new Percolation(4);
+    }
+}
