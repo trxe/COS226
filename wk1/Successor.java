@@ -9,18 +9,18 @@ class Successor {
 	}
 
 	void remove(int k) {
-		if (id[k] == k) {
-			id[k]++;
+		if (next[k] == k) {
+			next[k]++;
 		} else {
-			id[k] = id[id[k]];
+			next[k] = next[next[k]];
 		}
 	}
 
 	int findSucc(int k) {
 		int r = k;
-		while (id[r] != r) {
-			id[k] = id[id[k]];
-			r = id[r];
+		while (next[r] != r) {
+			next[k] = next[next[k]];
+			r = next[r];
 		}
 		return  r;
 	}
