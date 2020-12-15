@@ -1,6 +1,6 @@
 import java.util.Iterator;
 
-class StackLinkedList<T> implements Iterable<T> {
+class QueueLinkedList<T> implements Iterable<T> {
     private class Node {
         T item;
         Node next;
@@ -27,19 +27,27 @@ class StackLinkedList<T> implements Iterable<T> {
         }
     }
 
+    private Node last;
     private Node first;
 
     public boolean isEmpty() {
         return first == null;
     }
 
-    public void push(T thing) {
-        first = new Node(thing, first);
+    public void enqueue(T thing) {
+        if (isEmpty()) {
+            first = new Node(thing);
+            last = first;
+        } else {
+            Node toAdd = new Node(thing);
+            last.add(toAdd);
+            last = last.next();
+        }
     }
 
-    public T pop() {
+    public T dequeue() {
         if (isEmpty()) {
-            throw new NullPointerException("Stack is empty.");
+            throw new NullPointerException("Queue is empty.");
         }
         T out = first.get();
         first = first.next();
@@ -55,7 +63,7 @@ class StackLinkedList<T> implements Iterable<T> {
 
         public T next() {
             if (!hasNext()) {
-                throw new NullPointerException("end of stack.");
+                throw new NullPointerException("end of queue.");
             }
             T out = current.get();
             current = current.next();
@@ -66,17 +74,16 @@ class StackLinkedList<T> implements Iterable<T> {
     public Iterator<T> iterator() {
         return new ListIterator();
     }
-    
+
     public static void main(String[] args) {
         try {
-            StackLinkedList<String> stack = new StackLinkedList<>();
-            stack.push("help");
-            stack.push("you");
-            stack.push("save");
-            stack.push("me");
-            System.out.println(stack.pop());
-            System.out.println(stack.pop());
-            Iterator<String> str = stack.iterator();
+            QueueLinkedList<String> queue = new QueueLinkedList<>();
+            queue.enqueue("help");
+            queue.enqueue("you");
+            queue.enqueue("save");
+            queue.enqueue("me");
+            System.out.println(queue.dequeue());
+            Iterator<String> str = queue.iterator();
             while (str.hasNext()) {
                 System.out.println(str.next());
             }
