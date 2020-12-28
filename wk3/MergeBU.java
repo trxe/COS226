@@ -4,17 +4,20 @@ import java.util.ArrayList;
 import edu.princeton.cs.algs4.StdRandom;
 
 class MergeBU {
-    public static <T extends Comparable<T>> void sort(T[] a, T[] aux, int lo, int hi) { 
-        int mid = (lo + hi) / 2;
-        if (hi > lo) {
-            sort(a, aux, lo, mid);
-            sort(a, aux, mid + 1, hi);
-            merge(a, aux, lo, mid, hi);
-        }
-    }
 
     public static <T extends Comparable<T>> void sort(T[] a, T[] aux) { 
-        MergeBU.sort(a, aux, 0, a.length - 1);
+        int n = a.length;
+        int probe = 0;
+
+        for (int sz = 1; sz < n; sz *= 2) { // double the RADIUS of merge interval; sz = radius
+            probe++;
+            for (int lo = 0; lo < n - sz; lo += 2 * sz) { // iterate through each valid lo
+                merge(a, aux, lo, lo + sz - 1, Math.min(lo + 2*sz - 1, n - 1)); 
+                // mid is either after 2 sz or the end of the array
+            }
+        }
+        System.out.println("number of passes: " + probe);
+        System.out.println("lg n: " + Math.log(n)/Math.log(2));
     }
 
     private static <T extends Comparable<T>> void merge(T[] a, T[] aux, int lo, int mid, int hi) {
@@ -81,6 +84,7 @@ class MergeBU {
             String[] a = aList.toArray(new String[1]);
             System.out.println("original");
             MergeBU.print(a);
+            System.out.println("merge sorting from bottom-up...");
             MergeBU.sort(a, new String[n]);
             System.out.println("sorted");
             MergeBU.print(a);
@@ -92,11 +96,10 @@ class MergeBU {
             }
             System.out.println("original");
             MergeBU.print(a);
+            System.out.println("merge sorting from bottom-up...");
             MergeBU.sort(a, new Integer[length]);
             System.out.println("sorted");
             MergeBU.print(a);
-            /*
-            */
         }
     }
 
