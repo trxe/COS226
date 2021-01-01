@@ -63,12 +63,22 @@ public T delMax() {
 
 strategy: create a max-heap, and then repeatedly remove the max-key.
 
-##### Heap creation
+is an algo with guaranteed nlgn compares, that is also in-place! but the inner
+loop is longer than quicksort's (comparing the children), not stable, makes poor
+use of cache memory (looking far away from the neighbourhood of the index).
+
+##### Bottom up, sink-based heap creation (as opposed to swim-based)
 
 - create array in arbitrary order.
 - go from the bottom elements (rightmost) and sink each downwards 
     - demotion used for elements already in array.
-- this will make heap creation nlgn compares.
+- actually uses a linear number of compares and exchanges on average.
+    - swim-based: nlgn
+    - sink-based: 2n compares + n exchanges
+        - leaves (terminal nodes) don't have to exchange.
+        - hint: multiply each node by number of same-tier nodes and the height
+          of that node relative to the leaves.
 
 ##### Heap emptying
 - repeatedly ``` delMax ``` to remove the max element. takes nlgn compares
+- just don't need to null out the removed item, unlike ``` delMax ```
