@@ -70,34 +70,33 @@ public class Solver {
         pqTwin.insert(new Node(initial.twin(), 0, null));
 
         boolean main = true;
-        boolean solved = false;
+        boolean solvable = false;
         Queue<Board> seqMain = new Queue<>();
         Queue<Board> seqTwin = new Queue<>();
         MinPQ<Node> pqRef = pq;
-        Queue<Board> seqRef = seqMain;
+        Queue<Board> sequence = seqMain;
         while (!pqRef.isEmpty()) {
             Node min = pqRef.delMin();
             if (min.isGoal()) {
-                seqRef.enqueue(min.board());
                 break;
             }
             else {
-                update(seqRef, min, pqRef);
+                update(sequence, min, pqRef);
                 main = !main;
                 if (main) {
                     pqRef = pq;
-                    seqRef = seqMain;
+                    sequence = seqMain;
                 } else {
                     pqRef = pqTwin;
-                    seqRef = seqTwin;
+                    sequence = seqTwin;
                 }
             }
         }
 
         if (pqRef == pq)
-            solved = true;
-        this.solvable = solved;
-        this.sequence = seqRef;
+            solvable = true;
+        this.solvable = solvable;
+        this.sequence = sequence;
     }
 
     private void update(Queue<Board> seq, Node min, MinPQ<Node> pqRef) {
@@ -119,7 +118,7 @@ public class Solver {
     public int moves() {
         if (!isSolvable())
             return -1;
-        return sequence.size() - 1;
+        return sequence.size();
     }
 
 

@@ -2,6 +2,7 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.Queue;
+import java.util.NoSuchElementException;
 import java.util.Iterator;
 
 public class Board {
@@ -52,7 +53,7 @@ public class Board {
             }
         }
 
-        // don't consider the last tile
+        //don't consider the last tile
         hd--;
         this.hamming = hd;
         return hd;
@@ -139,6 +140,8 @@ public class Board {
                 }
             }
         }
+        int r = r0;
+        int c = c0;
         int[][] list = new int[][] {{r0 - 1, c0}, {r0, c0 + 1}, {r0 + 1, c0}, {r0, c0 - 1}};
         Queue<Board> neighs = new Queue<>();
         for (int i = 0; i < 4; i++) {
