@@ -53,61 +53,39 @@ public class Solver {
                 return 0;
         }
 
+        /*
         public String toString() {
             return board.toString() + "priority: " + priority +
                 String.format("(%d, %d)", priority - moveCount, moveCount) + "\n";
         }
+        */
 
     }
 
     // find a solution to the initial board (using the A* algorithm)
     public Solver(Board initial) {
-        if (initial == null)
-            throw new IllegalArgumentException();
-        MinPQ<Node> pq = new MinPQ<>();
-        MinPQ<Node> pqTwin = new MinPQ<>();
-        pq.insert(new Node(initial, 0, null));
-        pqTwin.insert(new Node(initial.twin(), 0, null));
-
+        MinPQ<Node> mpq = new MinPQ<>();
+        MinPQ<Node> tpq = new MinPQ<>();
+        mpq.insert(new Node(initial, 0, null));
+        tpq.insert(new Node(initial.twin(), 0, null));
+        MinPQ<Node> currpq = mpq;
+        Queue<Board> msoln = new Queue<>();
+        Queue<Board> tsoln = new Queue<>();
+        Queue<Board> currsoln = msoln;
         boolean main = true;
         boolean solved = false;
-        Queue<Board> seqMain = new Queue<>();
-        Queue<Board> seqTwin = new Queue<>();
-        MinPQ<Node> pqRef = pq;
-        Queue<Board> seqRef = seqMain;
-        while (!pqRef.isEmpty()) {
-            Node min = pqRef.delMin();
-            if (min.isGoal()) {
-                seqRef.enqueue(min.board());
-                break;
-            }
-            else {
-                update(seqRef, min, pqRef);
-                main = !main;
-                if (main) {
-                    pqRef = pq;
-                    seqRef = seqMain;
-                } else {
-                    pqRef = pqTwin;
-                    seqRef = seqTwin;
-                }
-            }
+        Node current = currpq.delMin();
+        while (!current.isGoal()) {
+            update(currsoln, current, currpq);
+            main = !main;
+            currsoln = (main ? msoln : tsoln);
+            currpq = (main ? mpq : tpq);
+            current = currpq.delMin();
         }
-
-        if (pqRef == pq)
-            solved = true;
-        this.solvable = solved;
-        this.sequence = seqRef;
     }
 
     private void update(Queue<Board> seq, Node min, MinPQ<Node> pqRef) {
-        assert !min.isGoal();
-        seq.enqueue(min.board());
-        Node[] neighs = min.neighbors();
-        int k = 0;
-        while (k < 4 && neighs[k] != null) {
-            pqRef.insert(neighs[k++]);
-        }
+
     }
 
     // is the initial board solvable? (see below)
@@ -156,4 +134,3 @@ public class Solver {
     }
 
 }
-
