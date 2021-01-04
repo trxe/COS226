@@ -2,7 +2,6 @@ import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.Queue;
-import java.util.NoSuchElementException;
 import java.util.Iterator;
 
 public class Board {
@@ -53,7 +52,7 @@ public class Board {
             }
         }
 
-        //don't consider the last tile
+        // don't consider the last tile
         hd--;
         this.hamming = hd;
         return hd;
@@ -140,9 +139,8 @@ public class Board {
                 }
             }
         }
-        int r = r0;
-        int c = c0;
-        int[][] list = new int[][] {{r0 - 1, c0}, {r0, c0 + 1}, {r0 + 1, c0}, {r0, c0 - 1}};
+        int[][] list = new int[][] {{r0 - 1, c0}, {r0, c0 + 1}, {r0 + 1, c0},
+            {r0, c0 - 1}};
         Queue<Board> neighs = new Queue<>();
         for (int i = 0; i < 4; i++) {
             if (isValidSwop(list, i)) {
@@ -167,7 +165,8 @@ public class Board {
         int ic = StdRandom.uniform(0, size);
         int jr = StdRandom.uniform(0, size);
         int jc = StdRandom.uniform(0, size);
-        while ((ir == jr && ic == jc) || twinB.tiles[ir][ic] == 0 || twinB.tiles[jr][jc] == 0) {
+        while ((ir == jr && ic == jc) || twinB.tiles[ir][ic] == 0 ||
+                twinB.tiles[jr][jc] == 0) {
             ir = StdRandom.uniform(0, size);
             ic = StdRandom.uniform(0, size);
             jr = StdRandom.uniform(0, size);
@@ -206,7 +205,8 @@ public class Board {
             StdOut.println(board);
             StdOut.println("hamming : " + board.hamming());
             StdOut.println("manhattan : " + board.manhattan());
-            StdOut.println("board and board 2 are " + (board.equals(board2) ? "" : "not ") + "equal");
+            StdOut.println("board and board 2 are " + (board.equals(board2) ? ""
+                        : "not ") + "equal");
             Board perf = new Board(new int[][]{{1, 2, 3}, {4, 5, 6}, {7, 8, 0}});
             StdOut.println(perf);
             StdOut.println("hamming : " + perf.hamming());

@@ -1,7 +1,6 @@
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.MinPQ;
-import java.util.NoSuchElementException;
 import java.util.Iterator;
 import edu.princeton.cs.algs4.Queue;
 
@@ -42,6 +41,20 @@ public class Solver {
             }
             return neighs;
         }
+        
+        Node[] neighborsAll() {
+            Iterator<Board> it = board.neighbors().iterator();
+            Node[] neighs = new Node[4];
+            int k = 0;
+            while (it.hasNext()) {
+                neighs[k++] = new Node(it.next(), this.moveCount + 1, this.board);
+            }
+            return neighs;
+        }
+
+        public boolean succ(Node that) {
+            return this.moveCount - that.moveCount == 1;
+        }
 
         public int compareTo(Node that) {
             int diff = this.priority - that.priority;
@@ -51,6 +64,34 @@ public class Solver {
                 return -1;
             else
                 return 0;
+        }
+
+        public int compareOrder(Node that) {
+            int diff = this.moveCount - that.moveCount;
+            if (diff > 0)
+                return 1;
+            else if (diff < 0)
+                return -1;
+            else
+                return this.compareTo(that);
+        }
+
+        public boolean isNextOf(Node that) {
+            /*
+             if (this.moveCount - that.moveCount == 1 
+                && Math.abs(that.board.manhattan() - this.board.manhattan()) == 1) {
+                 Node[] neighs = that.neighborsAll();
+                 for (Node n : neighs) {
+                     if (n == null) { break; }
+                     if (n.board().equals(this.board())) {
+                         return true;
+                     }
+                 }
+                }
+             return false;
+             */
+             return (this.moveCount - that.moveCount == 1 
+                && Math.abs(that.board.manhattan() - this.board.manhattan()) == 1);
         }
 
         /*
@@ -69,9 +110,9 @@ public class Solver {
         mpq.insert(new Node(initial, 0, null));
         tpq.insert(new Node(initial.twin(), 0, null));
         MinPQ<Node> currpq = mpq;
-        Queue<Board> msoln = new Queue<>();
-        Queue<Board> tsoln = new Queue<>();
-        Queue<Board> currsoln = msoln;
+        MinPQ<Node> msoln = new MinPQ<>(Node::compareOrder);
+        MinPQ<Node> tsoln = new MinPQ<>(Node::compareOrder);
+        MinPQ<Node> currsoln = msoln;
         boolean main = true;
         boolean solved = false;
         Node current = currpq.delMin();
@@ -82,10 +123,40 @@ public class Solver {
             currpq = (main ? mpq : tpq);
             current = currpq.delMin();
         }
+        
+        if (currpq == mpq) {
+            solved = true;
+            assert current.board().isGoal();
+            Board goal = current.board();
+            Queue<Board> finalSoln = new Queue<>();
+            if (!msoln.isEmpty()) {
+                current = msoln.delMin();
+                Iterator<Node> iter = msoln.iterator();
+                while (iter.hasNext()) {
+                    Node now = iter.next();
+                    if (now.isNextOf(current)) {
+                        finalSoln.enqueue(current.board());
+                        current = now;
+                    }
+                }
+                finalSoln.enqueue(current.board());
+            }
+            finalSoln.enqueue(goal);
+            this.sequence = finalSoln;
+        } else {
+            this.sequence = new Queue<>();
+        }
+        this.solvable = solved;
     }
 
-    private void update(Queue<Board> seq, Node min, MinPQ<Node> pqRef) {
-
+    private void update(MinPQ<Node> seq, Node min, MinPQ<Node> pqRef) {
+        assert !min.isGoal();
+        seq.insert(min);
+        Node[] neighs = min.neighbors();
+        for (Node n : neighs) {
+            if (n == null) { break; }
+            pqRef.insert(n);
+        }
     }
 
     // is the initial board solvable? (see below)
@@ -127,9 +198,14 @@ public class Solver {
         if (!solver.isSolvable())
             StdOut.println("No solution possible");
         else {
-            StdOut.println("Minimum number of moves = " + solver.moves());
-            for (Board board : solver.solution())
-                StdOut.println(board);
+            for (Board board : solver.solution()) {
+                try {
+                    StdOut.println("\033[H\033[2J");
+                    StdOut.println("Minimum number of moves = " + solver.moves());
+                    StdOut.println(board);
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) { }
+            }
         }
     }
 
