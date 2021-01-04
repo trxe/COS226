@@ -99,7 +99,9 @@ public class Board {
     public boolean equals(Object y) {
         if (this == y) {
             return true;
-        } else if (y instanceof Board) {
+        } else if (y == null) {
+            return false;
+        } else if (y.getClass == Board.getClass) {
             Board that = (Board) y;
             if (this.size != that.size)
                 return false;
