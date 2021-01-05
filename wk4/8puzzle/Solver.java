@@ -79,7 +79,7 @@ public class Solver {
         }
 
         public boolean isNextOf(Node that) {
-            return prev.equals(that.board());
+            return prev.equals(that.board()) && this.moveCount - that.moveCount == 1;
         }
 
         /*
@@ -93,6 +93,8 @@ public class Solver {
 
     // find a solution to the initial board (using the A* algorithm)
     public Solver(Board initial) {
+        if (initial == null)
+            throw new IllegalArgumentException();
         MinPQ<Node> mpq = new MinPQ<>();
         MinPQ<Node> tpq = new MinPQ<>();
         mpq.insert(new Node(initial, 0, null));
@@ -116,7 +118,6 @@ public class Solver {
         if (currpq == mpq) {
             solved = true;
             Stack<Board> finalSoln = new Stack<>();
-            //finalSoln.push(current.board());
             if (!msoln.isEmpty()) {
                 current = msoln.pop();
                 Iterator<Node> iter = msoln.iterator();

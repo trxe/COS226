@@ -101,7 +101,7 @@ public class Board {
             return true;
         } else if (y == null) {
             return false;
-        } else if (y.getClass == Board.getClass) {
+        } else if (y.getClass() == this.getClass()) {
             Board that = (Board) y;
             if (this.size != that.size)
                 return false;
