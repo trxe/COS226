@@ -13,4 +13,5 @@ and right elements be 2-nodes on the left and right branches.)
 
 ![moving up](twothree.gif)
 
-BST
+- worst case: height = lg n
+- best case: height = lg_3 n ~ 0.631 lg n
