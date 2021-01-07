@@ -26,7 +26,7 @@
 3 pointers: **lt** for partition element (less than); **i** for the end of the
 subarray of elements equal to a[lt]; **gt** for the last element (greater than)
 
-```
+```java
 sort(T[] a, int lo, int hi) {
     if (hi <= lo)
         return;

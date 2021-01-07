@@ -23,7 +23,7 @@ data structure: binary heap.
 - also deletion also requires swapping with the last element and then a a
   demotion method (we'll call it ``` sink ```).
 
-``` 
+```java
 private void swim(int s) {
     int k = s;
     while (less(k / 2, k)) {

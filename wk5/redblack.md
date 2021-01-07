@@ -19,7 +19,7 @@ maintain symmetric order and perfect black balance.
 ![before rotation](rotate-bef.png)
 ![after rotation](rotate-aft.png)
 
-```
+```java
 private Node rotateLeft(Node h) {
     assert isRed(h.right);
     Node x = h.right;
