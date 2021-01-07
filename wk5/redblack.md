@@ -35,3 +35,47 @@ private Node rotateLeft(Node h) {
 paradoxically  we also need a ```rotateRight``` helping us to reorientate.
 we also need a color flipping ``` flipColors(Node h) ``` in case that there's a
 Node with 2 red links, i.e. a temporary 4-Node. change both to black.
+
+```java
+private Node rotateRight(Node h) {
+    assert isRed(h.left);
+    Node x = h.left;
+    h.left = x.right;
+    x.right = h;
+    x.color = h.color;
+    h.color = RED;
+    return x;
+}
+
+private Node flipColors(Node h) {
+    assert isRed(h.left) && isRed(h.right);
+    h.color = RED;
+    h.left.color = BLACK;
+    h.right.color = BLACK;
+}
+```
+
+how do we work with this? notice the following patterns
+
+```java
+private Node put(Node h, K key, V val) {
+    if (h == null) return new Node(key, val, RED);
+    int cmp = key.compareTo(h.key);
+    if (cmp < 0)    h.left = put(h.left, key, val);
+    if (cmp < 0)    h.right = put(h.right, key, val);
+    else            h.val = val; // replacement
+
+    // rebalance
+    if (isRed(h.right) && !isRed(h.left)) h = rotateLeft(h);
+    if (isRed(h.left) && isRed(h.left.left)) h = rotateRight(h);
+    if (isRed(h.right) && isRed(h.right)) h = flipColors(h);
+}
+```
+
+see the following illustrations for why.
+
+#### Balance and performance analysis
+
+> Proposition: Height of tree is <= 2lgN in worst case.
+    > (Hint: every path from root to null link has same number of black links.
+    > so 
