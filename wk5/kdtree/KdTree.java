@@ -1,0 +1,297 @@
+import java.util.Iterator;
+import edu.princeton.cs.algs4.Queue;
+import edu.princeton.cs.algs4.Point2D;
+import edu.princeton.cs.algs4.RectHV;
+import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.StdDraw;
+import edu.princeton.cs.algs4.StdRandom;
+import edu.princeton.cs.algs4.Stopwatch;
+
+public class KdTree {
+
+    private static final boolean VERT = true;
+    private static final boolean HORI = false;
+    private static final int CANV = 1;
+    private Node root;
+
+    private class Node {
+        double x;
+        double y;
+        Node left;
+        Node right;
+        private final int height;
+
+        private int doubleCmp(double a, double b) {
+            double c = a - b;
+            if (c < 0) return 1;
+            if (c > 0) return -1;
+            return 0;
+        }
+
+        Node(double x, double y, int height) {
+            this.x = x;
+            this.y = y;
+            this.height = height;
+        }
+
+        int compareTo(Node that) {
+            if (this.direction() == VERT)
+                return doubleCmp(this.x, that.x);
+            return doubleCmp(this.y, that.y);
+        }
+
+        int compareCoord(double thatx, double thaty) {
+            if (this.direction() == VERT) 
+                return doubleCmp(this.x, thatx);
+            return doubleCmp(this.y, thaty);
+        }
+
+        boolean direction() {
+            return height % 2 == 0;
+        }
+    }
+
+    public boolean isEmpty() {
+        return root == null;
+    }
+
+    private int size(Node x) {
+        if (x == null)
+            return 0;
+        return size(x.left) + 1 + size(x.right);
+    }
+
+    public int size() {
+        return this.size(root);
+    }
+
+    public void insert(Point2D p) {
+        if (p == null) 
+            throw new IllegalArgumentException();
+        if (this.isEmpty()) {
+            this.root = new Node(p.x(), p.y(), 0);
+            return;
+        }
+
+        Node node = root;
+        double x = p.x();
+        double y = p.y();
+        while (node != null) {
+            int cmp = node.compareCoord(x, y);
+            if (cmp > 0) {
+                if (node.right != null) 
+                    node = node.right;
+                else {
+                    node.right = new Node(x, y, node.height + 1);
+                    break;
+                }
+            } else if (cmp < 0) {
+                if (node.left != null) 
+                    node = node.left;
+                else {
+                    node.left = new Node(x, y, node.height + 1);
+                    break;
+                }
+            } else {
+                node.x = x;
+                node.y = y;
+                break;
+            }
+        }
+    }
+
+    public boolean contains(Point2D p) {
+        if (p == null) 
+            throw new IllegalArgumentException();
+
+        Node node = root;
+        double x = p.x();
+        double y = p.y();
+        while (node != null) {
+            int cmp = node.compareCoord(x, y);
+            if (cmp > 0) {
+                node = node.right;
+            } else if (cmp < 0) {
+                node = node.left;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void draw(Node node, double lox, double hix, double loy, double hiy) {
+        if (node == null)
+            return;
+        double xcoord = node.x;
+        double ycoord = node.y;
+        toPoint(node).draw();
+        //StdDraw.filledCircle(xcoord, ycoord, 0.01);
+        if (node.direction() == VERT) {
+            StdDraw.setPenColor(StdDraw.RED);
+            StdDraw.line(xcoord, loy, xcoord, hiy);
+            StdDraw.setPenColor(StdDraw.BLACK);
+            draw(node.left, lox, xcoord, loy, hiy);
+            draw(node.right, xcoord, hix, loy, hiy);
+        } else {
+            StdDraw.setPenColor(StdDraw.BLUE);
+            StdDraw.line(lox, ycoord, hix, ycoord);
+            StdDraw.setPenColor(StdDraw.BLACK);
+            draw(node.left, lox, hix, loy, ycoord);
+            draw(node.right, lox, hix, ycoord, hiy);
+        }
+    }
+
+    public void draw() {
+        this.draw(root, 0.0, (double) CANV, 0.0, (double) CANV);
+    }
+
+    public Iterable<Point2D> range(RectHV rect) {
+        if (rect == null) 
+            throw new IllegalArgumentException();
+        Queue<Point2D> range = new Queue<>();
+        rect.draw();
+
+        /*
+        this.draw();
+        StdDraw.setPenColor(StdDraw.BOOK_BLUE);
+        */
+
+        update(rect, range, root, 0.0, CANV, 0.0, CANV);
+
+        return range;
+    }
+
+    private void update(RectHV rect, Queue<Point2D> pq, Node node, double lox,
+            double hix, double loy, double hiy) {
+        if (node == null)
+            return;
+        double xcoord = node.x;
+        double ycoord = node.y;
+        Point2D p = toPoint(node);
+        if (rect.contains(p))
+            pq.enqueue(p);
+        //System.out.printf("[%.2f, %.2f] x [%.2f, %.2f]\n", lox, hix, loy, hiy);
+
+        if (node.direction() == VERT) {
+            RectHV leftBox = new RectHV(lox, loy, xcoord, hiy);
+            RectHV rightBox = new RectHV(xcoord, loy, hix, hiy);
+            if (rect.intersects(leftBox))
+                update(rect, pq, node.left, lox, xcoord, loy, hiy);
+            if (rect.intersects(rightBox))
+                update(rect, pq, node.right, xcoord, hix, loy, hiy);
+        } else {
+            RectHV leftBox = new RectHV(lox, loy, hix, ycoord);
+            RectHV rightBox = new RectHV(lox, ycoord, hix, hiy);
+            if (rect.intersects(leftBox))
+                update(rect, pq, node.left, lox, hix, loy, ycoord);
+            if (rect.intersects(rightBox))
+                update(rect, pq, node.right, lox, hix, ycoord, hiy);
+        }
+    }
+
+    public Point2D nearest(Point2D p) {
+        if (p == null) 
+            throw new IllegalArgumentException();
+        Point2D closest = new Point2D(root.x, root.y);
+        closest = neighbour(p, closest, root, 0, (double) CANV, 0.0, (double) CANV);
+        return closest;
+    }
+
+    private Point2D neighbour(Point2D p, Point2D closest, Node node, double lox,
+            double hix, double loy, double hiy) {
+        if (node == null)
+            return closest;
+        double sd = p.distanceTo(closest);
+        double xcoord = node.x;
+        double ycoord = node.y;
+        Point2D pn = toPoint(node);
+        if (p.distanceTo(pn) < sd)
+            closest = pn;
+
+        /*
+        try {
+            StdDraw.setPenColor(StdDraw.MAGENTA);
+            StdDraw.line(p.x(), p.y(), pn.x(), pn.y());
+            StdDraw.setPenColor(StdDraw.BLACK);
+            Thread.sleep(1000);
+            StdDraw.clear();
+            this.draw();
+        } catch (InterruptedException e) {}
+        */
+
+        //System.out.printf("[%.2f, %.2f] x [%.2f, %.2f]\n", lox, hix, loy, hiy);
+
+        if (node.direction() == VERT) {
+            RectHV leftBox = new RectHV(lox, loy, xcoord, hiy);
+            RectHV rightBox = new RectHV(xcoord, loy, hix, hiy);
+            if (leftBox.contains(p)) {
+                closest = neighbour(p, closest, node.left, lox, xcoord, loy, hiy);
+                if (rightBox.distanceTo(p) < p.distanceTo(closest))
+                    closest = neighbour(p, closest, node.right, xcoord, hix, loy, hiy);
+            } else {
+                closest = neighbour(p, closest, node.right, xcoord, hix, loy, hiy);
+                if (leftBox.distanceTo(p) < p.distanceTo(closest))
+                    closest = neighbour(p, closest, node.left, lox, xcoord, loy, hiy);
+            }
+        } else {
+            RectHV leftBox = new RectHV(lox, loy, hix, ycoord);
+            RectHV rightBox = new RectHV(lox, ycoord, hix, hiy);
+            if (leftBox.contains(p)) {
+                closest = neighbour(p, closest, node.left, lox, hix, loy, ycoord);
+                if (rightBox.distanceTo(p) < p.distanceTo(closest))
+                    closest = neighbour(p, closest, node.right, lox, hix, ycoord, hiy);
+            } else {
+                closest = neighbour(p, closest, node.right, lox, hix, ycoord, hiy);
+                if (leftBox.distanceTo(p) < p.distanceTo(closest))
+                    closest = neighbour(p, closest, node.left, lox, hix, loy, ycoord);
+            }
+        }
+        return closest;
+    }
+
+    private Point2D toPoint(Node node) {
+        return new Point2D(node.x, node.y);
+    }
+
+    public static void main(String[] args) {
+        try {
+            StdDraw.setXscale(0, CANV);
+            StdDraw.setYscale(0, CANV);
+
+            In in = new In(args[0]);
+            KdTree pset = new KdTree();
+            int num = in.readInt();
+            for (int i = 0; i < num; i++) {
+                pset.insert(new Point2D(in.readDouble(), in.readDouble()));
+            }
+
+            pset.draw();
+
+            // range
+            Stopwatch watch = new Stopwatch();
+            RectHV r = new RectHV(0.20, 0.15, 0.9, 0.46);
+            Iterable<Point2D> range = pset.range(r);
+            System.out.printf("range() time: %.5f\n", watch.elapsedTime());
+
+            Iterator<Point2D> it = range.iterator();
+            StdDraw.setPenColor(StdDraw.GREEN);
+            while (it.hasNext()) {
+                Point2D next = it.next();
+                next.draw();
+                //StdDraw.filledCircle(next.x(), next.y(), 0.01);
+            }
+            StdDraw.setPenColor(StdDraw.BLACK);
+            
+            // nearest
+            watch = new Stopwatch();
+            Point2D help = new Point2D(0.3566, 0.7235);
+            Point2D me = pset.nearest(help);
+            System.out.printf("nearest() time: %.5f\n", watch.elapsedTime());
+            StdDraw.setPenColor(StdDraw.MAGENTA);
+            StdDraw.line(help.x(), help.y(), me.x(), me.y());
+        } catch (IllegalArgumentException e) {
+            System.out.println(e);
+        }
+    }
+}

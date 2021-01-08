@@ -1,3 +1,14 @@
+## Summary of important invariants
+
+1. Every path from the root to the leaf is of length k.
+2. If a node has n children, it contains n - 1 keys.
+3. The elements stored in a given subtree have keys between the keys on the
+   parent node on either side of the subtree pointer.
+
+These are important for our ST to have balanced structure. Red-black BSTs will
+have the above, but so should the B-trees, which have to make sure that every
+node is at least half full as well.
+
 ## Red-Black BST
 
 representing the 2-3 tree as a BST, with "internal" left-leaning links as glue
@@ -72,10 +83,30 @@ private Node put(Node h, K key, V val) {
 }
 ```
 
-see the following illustrations for why.
+![insertion into root 3-node](redblack-ins.png)
+![insertion into leaf 3-node](redblack-ins2.png)
 
 #### Balance and performance analysis
 
-> Proposition: Height of tree is <= 2lgN in worst case.
-    > (Hint: every path from root to null link has same number of black links.
-    > so 
+> **Proposition**: Height of tree is <= 2lgN in worst case.
+> (Hint: every path from root to null link has same number of black links, and
+> no 2 consecutive links are red. so at most if red and black links alternate
+> through every path. but draw any tree and you'll see that the average case has
+> 1.00lgN as height)
+
+## B-trees
+
+Often we need to store externally a great amount of data, in file system for
+example. Then *locality would be more crucial than memory*.
+
+> **Page.** Contiguous block of data (e.g. a file, of 4096 byte chunk)
+> **Probe.** First access to a page (from disk to memory).
+> We want to access data using minimum number of probes to access data as fast
+> as possible (i.e. tree has to be as shallow as possible!)
+
+A B-tree is a generalised form of the (2,3)-tree, where we have trees of nodes
+of size k, where 2 <= k < b, where b, k are integers. We want to make sure that
+every node has at least b/2 values.
+
+> **Proposition**: Height of tree k is lg_(m-1)N <= k <= lg_(m/2)N in worst case.
+> (because every node has between m/2 and m-1 links.)
