@@ -1,4 +1,5 @@
 import java.util.Iterator;
+import java.util.function.Supplier;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
@@ -62,6 +63,8 @@ public class KdTree {
         boolean direction() {
             return height % 2 == 0;
         }
+
+        public String toString() { return "(" + x + " " + y + ")"; }
     }
 
     public boolean isEmpty() {
@@ -69,6 +72,7 @@ public class KdTree {
     }
 
     public int size() {
+        if (root == null) return 0;
         return root.size;
     }
 
@@ -157,6 +161,7 @@ public class KdTree {
     public Iterable<Point2D> range(RectHV rect) {
         if (rect == null) 
             throw new IllegalArgumentException();
+        if (this.isEmpty()) return null;
         Queue<Point2D> range = new Queue<>();
 
         /*
@@ -201,6 +206,7 @@ public class KdTree {
     public Point2D nearest(Point2D p) {
         if (p == null) 
             throw new IllegalArgumentException();
+        if (this.isEmpty()) return null;
         Point2D closest = new Point2D(root.x, root.y);
         closest = neighbour(p, closest, root, 0, (double) CANV, 0.0, (double) CANV);
         return closest;
@@ -217,43 +223,44 @@ public class KdTree {
         if (p.distanceSquaredTo(pn) < sd)
             closest = pn;
 
+        System.out.println(node);
+
         /*
         try {
             StdDraw.setPenColor(StdDraw.MAGENTA);
             StdDraw.line(p.x(), p.y(), pn.x(), pn.y());
             StdDraw.setPenColor(StdDraw.BLACK);
-            Thread.sleep(1000);
+            Thread.sleep(200);
             StdDraw.clear();
             this.draw();
         } catch (InterruptedException e) {}
         */
 
-        // System.out.printf("[%.2f, %.2f] x [%.2f, %.2f]\n", lox, hix, loy, hiy);
-
+        sd = p.distanceSquaredTo(closest);
+        RectHV leftBox, rightBox;
+        Supplier<Point2D> left, right;
         if (node.direction() == VERT) {
-            RectHV leftBox = new RectHV(lox, loy, xcoord, hiy);
-            RectHV rightBox = new RectHV(xcoord, loy, hix, hiy);
-            if (leftBox.contains(p)) {
+            leftBox = new RectHV(lox, loy, xcoord, hiy);
+            rightBox = new RectHV(xcoord, loy, hix, hiy);
+            double leftd = (leftBox.contains(p) ? 0 : leftBox.distanceSquaredTo(p));
+            double rightd = (rightBox.contains(p) ? 0 : rightBox.distanceSquaredTo(p));
+            if (leftd < sd && leftd < rightd)
                 closest = neighbour(p, closest, node.left, lox, xcoord, loy, hiy);
-                if (rightBox.distanceSquaredTo(p) < p.distanceSquaredTo(closest))
-                    closest = neighbour(p, closest, node.right, xcoord, hix, loy, hiy);
-            } else {
+            if (rightd < sd)
                 closest = neighbour(p, closest, node.right, xcoord, hix, loy, hiy);
-                if (leftBox.distanceSquaredTo(p) < p.distanceSquaredTo(closest))
-                    closest = neighbour(p, closest, node.left, lox, xcoord, loy, hiy);
-            }
+            if (leftd < sd && leftd >= rightd) 
+                closest = neighbour(p, closest, node.left, lox, xcoord, loy, hiy);
         } else {
-            RectHV leftBox = new RectHV(lox, loy, hix, ycoord);
-            RectHV rightBox = new RectHV(lox, ycoord, hix, hiy);
-            if (leftBox.contains(p)) {
+            leftBox = new RectHV(lox, loy, hix, ycoord);
+            rightBox = new RectHV(lox, ycoord, hix, hiy);
+            double leftd = (leftBox.contains(p) ? 0 : leftBox.distanceSquaredTo(p));
+            double rightd = (rightBox.contains(p) ? 0 : rightBox.distanceSquaredTo(p));
+            if (leftd < sd && leftd < rightd)
                 closest = neighbour(p, closest, node.left, lox, hix, loy, ycoord);
-                if (rightBox.distanceSquaredTo(p) < p.distanceSquaredTo(closest))
-                    closest = neighbour(p, closest, node.right, lox, hix, ycoord, hiy);
-            } else {
+            if (rightd < sd && rightd < leftd)
                 closest = neighbour(p, closest, node.right, lox, hix, ycoord, hiy);
-                if (leftBox.distanceSquaredTo(p) < p.distanceSquaredTo(closest))
-                    closest = neighbour(p, closest, node.left, lox, hix, loy, ycoord);
-            }
+            if (leftd < sd && leftd >= rightd) 
+                closest = neighbour(p, closest, node.left, lox, xcoord, loy, hiy);
         }
         return closest;
     }
@@ -295,7 +302,7 @@ public class KdTree {
             
             // nearest
             watch = new Stopwatch();
-            Point2D help = new Point2D(0.3566, 0.7235);
+            Point2D help = new Point2D(0.34375, 0.125);
             Point2D me = pset.nearest(help);
             System.out.printf("nearest() time: %.5f\n", watch.elapsedTime());
             StdDraw.setPenColor(StdDraw.MAGENTA);
