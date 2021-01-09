@@ -32,6 +32,8 @@ public class PointSET {
     public boolean contains(Point2D p) {
         if (p == null) 
             throw new IllegalArgumentException();
+        if (this.isEmpty())
+            return false;
         return points.contains((Object) p);
     }
 
@@ -40,7 +42,7 @@ public class PointSET {
         while (iter.hasNext()) {
             Point2D next = iter.next();
             next.draw();
-            //StdDraw.filledCircle(next.x(), next.y(), 0.01);
+            // StdDraw.filledCircle(next.x(), next.y(), 0.01);
         }
         StdDraw.show();
     }
@@ -48,11 +50,10 @@ public class PointSET {
     public Iterable<Point2D> range(RectHV rect) {
         if (rect == null) 
             throw new IllegalArgumentException();
+        if (this.isEmpty())
+            return null;
         Iterator<Point2D> iter = points.iterator();
         Queue<Point2D> range = new Queue<>();
-        this.draw();
-        StdDraw.setPenColor(StdDraw.BOOK_BLUE);
-        rect.draw();
         while (iter.hasNext()) {
             Point2D next = iter.next();
             if (rect.contains(next))
@@ -64,12 +65,14 @@ public class PointSET {
     public Point2D nearest(Point2D p) {
         if (p == null) 
             throw new IllegalArgumentException();
+        if (this.isEmpty())
+            return null;
         Point2D closest = points.first();
         Iterator<Point2D> iter = points.iterator();
         while (iter.hasNext()) {
             Point2D next = iter.next();
-            assert next.distanceTo(p) >= 0;
-            if (closest.distanceTo(p) > next.distanceTo(p))
+            assert next.distanceSquaredTo(p) >= 0;
+            if (closest.distanceSquaredTo(p) > next.distanceSquaredTo(p))
                 closest = next;
         }
         return closest;
@@ -97,7 +100,7 @@ public class PointSET {
             while (it.hasNext()) {
                 Point2D next = it.next();
                 next.draw();
-                //StdDraw.filledCircle(next.x(), next.y(), 0.01);
+                // StdDraw.filledCircle(next.x(), next.y(), 0.01);
             }
             StdDraw.setPenColor(StdDraw.BLACK);
             

@@ -4,7 +4,6 @@ import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdDraw;
-import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.Stopwatch;
 
 public class KdTree {
@@ -20,6 +19,14 @@ public class KdTree {
         Node left;
         Node right;
         private final int height;
+        int size;
+
+        Node(double x, double y, int height, int size) {
+            this.x = x;
+            this.y = y;
+            this.height = height;
+            this.size = size;
+        }
 
         private int doubleCmp(double a, double b) {
             double c = a - b;
@@ -28,22 +35,28 @@ public class KdTree {
             return 0;
         }
 
-        Node(double x, double y, int height) {
-            this.x = x;
-            this.y = y;
-            this.height = height;
-        }
-
         int compareTo(Node that) {
-            if (this.direction() == VERT)
-                return doubleCmp(this.x, that.x);
-            return doubleCmp(this.y, that.y);
+            int dx = doubleCmp(this.x, that.x);
+            int dy = doubleCmp(this.y, that.y);
+            if (this.direction() == VERT) {
+               if (dx == 0) return dy;
+               return dx;
+            } else {
+                if (dy == 0) return dx;
+                return dy;
+            }
         }
 
         int compareCoord(double thatx, double thaty) {
-            if (this.direction() == VERT) 
-                return doubleCmp(this.x, thatx);
-            return doubleCmp(this.y, thaty);
+            int dx = doubleCmp(this.x, thatx);
+            int dy = doubleCmp(this.y, thaty);
+            if (this.direction() == VERT) {
+               if (dx == 0) return dy;
+               return dx;
+            } else {
+                if (dy == 0) return dx;
+                return dy;
+            }
         }
 
         boolean direction() {
@@ -55,21 +68,15 @@ public class KdTree {
         return root == null;
     }
 
-    private int size(Node x) {
-        if (x == null)
-            return 0;
-        return size(x.left) + 1 + size(x.right);
-    }
-
     public int size() {
-        return this.size(root);
+        return root.size;
     }
 
     public void insert(Point2D p) {
         if (p == null) 
             throw new IllegalArgumentException();
         if (this.isEmpty()) {
-            this.root = new Node(p.x(), p.y(), 0);
+            this.root = new Node(p.x(), p.y(), 0, 1);
             return;
         }
 
@@ -78,18 +85,19 @@ public class KdTree {
         double y = p.y();
         while (node != null) {
             int cmp = node.compareCoord(x, y);
+            node.size++;
             if (cmp > 0) {
-                if (node.right != null) 
+                if (node.right != null) {
                     node = node.right;
-                else {
-                    node.right = new Node(x, y, node.height + 1);
+                } else {
+                    node.right = new Node(x, y, node.height + 1, 1);
                     break;
                 }
             } else if (cmp < 0) {
-                if (node.left != null) 
+                if (node.left != null) {
                     node = node.left;
-                else {
-                    node.left = new Node(x, y, node.height + 1);
+                } else {
+                    node.left = new Node(x, y, node.height + 1, 1);
                     break;
                 }
             } else {
@@ -126,7 +134,7 @@ public class KdTree {
         double xcoord = node.x;
         double ycoord = node.y;
         toPoint(node).draw();
-        //StdDraw.filledCircle(xcoord, ycoord, 0.01);
+        // StdDraw.filledCircle(xcoord, ycoord, 0.01);
         if (node.direction() == VERT) {
             StdDraw.setPenColor(StdDraw.RED);
             StdDraw.line(xcoord, loy, xcoord, hiy);
@@ -150,10 +158,10 @@ public class KdTree {
         if (rect == null) 
             throw new IllegalArgumentException();
         Queue<Point2D> range = new Queue<>();
-        rect.draw();
 
         /*
         this.draw();
+        rect.draw();
         StdDraw.setPenColor(StdDraw.BOOK_BLUE);
         */
 
@@ -171,7 +179,7 @@ public class KdTree {
         Point2D p = toPoint(node);
         if (rect.contains(p))
             pq.enqueue(p);
-        //System.out.printf("[%.2f, %.2f] x [%.2f, %.2f]\n", lox, hix, loy, hiy);
+        // System.out.printf("[%.2f, %.2f] x [%.2f, %.2f]\n", lox, hix, loy, hiy);
 
         if (node.direction() == VERT) {
             RectHV leftBox = new RectHV(lox, loy, xcoord, hiy);
@@ -202,11 +210,11 @@ public class KdTree {
             double hix, double loy, double hiy) {
         if (node == null)
             return closest;
-        double sd = p.distanceTo(closest);
+        double sd = p.distanceSquaredTo(closest);
         double xcoord = node.x;
         double ycoord = node.y;
         Point2D pn = toPoint(node);
-        if (p.distanceTo(pn) < sd)
+        if (p.distanceSquaredTo(pn) < sd)
             closest = pn;
 
         /*
@@ -220,18 +228,18 @@ public class KdTree {
         } catch (InterruptedException e) {}
         */
 
-        //System.out.printf("[%.2f, %.2f] x [%.2f, %.2f]\n", lox, hix, loy, hiy);
+        // System.out.printf("[%.2f, %.2f] x [%.2f, %.2f]\n", lox, hix, loy, hiy);
 
         if (node.direction() == VERT) {
             RectHV leftBox = new RectHV(lox, loy, xcoord, hiy);
             RectHV rightBox = new RectHV(xcoord, loy, hix, hiy);
             if (leftBox.contains(p)) {
                 closest = neighbour(p, closest, node.left, lox, xcoord, loy, hiy);
-                if (rightBox.distanceTo(p) < p.distanceTo(closest))
+                if (rightBox.distanceSquaredTo(p) < p.distanceSquaredTo(closest))
                     closest = neighbour(p, closest, node.right, xcoord, hix, loy, hiy);
             } else {
                 closest = neighbour(p, closest, node.right, xcoord, hix, loy, hiy);
-                if (leftBox.distanceTo(p) < p.distanceTo(closest))
+                if (leftBox.distanceSquaredTo(p) < p.distanceSquaredTo(closest))
                     closest = neighbour(p, closest, node.left, lox, xcoord, loy, hiy);
             }
         } else {
@@ -239,11 +247,11 @@ public class KdTree {
             RectHV rightBox = new RectHV(lox, ycoord, hix, hiy);
             if (leftBox.contains(p)) {
                 closest = neighbour(p, closest, node.left, lox, hix, loy, ycoord);
-                if (rightBox.distanceTo(p) < p.distanceTo(closest))
+                if (rightBox.distanceSquaredTo(p) < p.distanceSquaredTo(closest))
                     closest = neighbour(p, closest, node.right, lox, hix, ycoord, hiy);
             } else {
                 closest = neighbour(p, closest, node.right, lox, hix, ycoord, hiy);
-                if (leftBox.distanceTo(p) < p.distanceTo(closest))
+                if (leftBox.distanceSquaredTo(p) < p.distanceSquaredTo(closest))
                     closest = neighbour(p, closest, node.left, lox, hix, loy, ycoord);
             }
         }
@@ -264,9 +272,11 @@ public class KdTree {
             int num = in.readInt();
             for (int i = 0; i < num; i++) {
                 pset.insert(new Point2D(in.readDouble(), in.readDouble()));
+                System.out.println(pset.size());
             }
 
-            pset.draw();
+            if (pset.size() < 1000)
+                pset.draw();
 
             // range
             Stopwatch watch = new Stopwatch();
@@ -279,7 +289,7 @@ public class KdTree {
             while (it.hasNext()) {
                 Point2D next = it.next();
                 next.draw();
-                //StdDraw.filledCircle(next.x(), next.y(), 0.01);
+                // StdDraw.filledCircle(next.x(), next.y(), 0.01);
             }
             StdDraw.setPenColor(StdDraw.BLACK);
             
