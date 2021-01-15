@@ -1,9 +1,8 @@
 public class DynamicMedian<T extends Comparable<T>> {
     private T[] arr; // let median be arr[0]
-    private int size;
+    private int size = 0;
 
     DynamicMedian(int size) {
-        this.size = size;
         this.arr = (T[]) new Object[size];
     }
 
@@ -40,23 +39,43 @@ public class DynamicMedian<T extends Comparable<T>> {
         }
     }
 
-    private void sink(int n) {
-        while (true) {
-            if (childR(n) != null) {
-                if (childR(n).compareTo(arr[n]) >= 0)
-                    break;
-                swop(2*n+1, n);
-            } else if (childL(n) != null) {
-                if (childL(n).compareTo(arr[n]) >= 0)
-                    break;
-                swop(2*n, n);
-            } else {
+    private void sinkLeft(int n) {
+        while (childL(n) != null) {
+            if (childL(n).compareTo(arr[n]) >= 0)
                 break;
-            }
+            swop(2*n, n);
         }
     }
 
+    public void isEmpty() { return size == 0; }
+
     public void add(T item) {
-        int x = 0;
-        int diff = item.compareTo(arr[x])
+        if (size + 1 > arr.length) throw new Exception("queue full!");
+        if (size == 0) {
+            arr[size++] = item;
+            return;
+        }
+        arr[size++] = item;
+        swim(size - 1);
+        sink(size - 1);
+    }
+
+    public T removeMedian() {
+        if (this.isEmpty()) throw new Exception("queue empty!");
+        T out = arr[0];
+        arr[0] = arr[size - 1];
+        arr[size - 1] = null;
+        sink(0);
+    }
+
+    public static void main(String[] args) {
+        DynamicMedian<String> q = new DynamicMedian<String>();
+        while (!StdIn.isEmpty()) {
+            String item = StdIn.readString();
+            if (!item.equals("-")) q.insert(item);
+            else if (!q.isEmpty()) StdOut.print(q.delMax() + " ");
+        }
+        StdOut.println("(" + q.size() + " left on q)");
+    }
+
 }
