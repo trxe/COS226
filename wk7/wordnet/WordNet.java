@@ -9,14 +9,16 @@ import java.util.ArrayList;
 
 public class WordNet {
 
-     private SeparateChainingHashST<String,List<Integer>> table;
+     private SeparateChainingHashST<String,List<Integer>> wordToNum;
+     private SeparateChainingHashST<Integer,List<String>> numToWord;
      private Digraph g;
 
     // constructor takes the name of the two input files
     public WordNet(String synsets, String hypernyms) {
          if (synsets == null || hypernyms == null)
               throw new IllegalArgumentException();
-         this.table = new SeparateChainingHashST<>();
+         this.wordToNum = new SeparateChainingHashST<>();
+         this.numToWord = new SeparateChainingHashST<>();
          In syn = new In(synsets);
          In hyper = new In(hypernyms);
          String[] lines = syn.readAllLines();
@@ -25,25 +27,37 @@ public class WordNet {
                 .forEach(x -> {
                     int v = Integer.parseInt(x[0]);
                     String[] synonyms = x[1].split(" ");
+                    List<String> synonymsList = new ArrayList<>();
                     for (int i = 0; i < synonyms.length; i++) {
-                        if (!table.contains(synonyms[i]))
-                            table.put(synonyms[i], new ArrayList<>());
-                        table.get(synonyms[i]).add(v);
+                        if (!wordToNum.contains(synonyms[i]))
+                            wordToNum.put(synonyms[i], new ArrayList<>());
+                        wordToNum.get(synonyms[i]).add(v);
+                        synonymsList.add(synonyms[i]);
                     }
+                    numToWord.put(v, synonymsList);
                 });
-         Iterator<String> keys = table.keys().iterator();
+         /*
+         Iterator<String> keys = wordToNum.keys().iterator();
          while (keys.hasNext()) {
              String k = keys.next();
-             System.out.println(k + " | " + table.get(k));
+             System.out.println(k + " | " + wordToNum.get(k));
          }
+         Iterator<Integer> verts = numToWord.keys().iterator();
+         while (verts.hasNext()) {
+             int k = verts.next();
+             System.out.println(k + " | " + numToWord.get(k));
+         }
+         */
          String[] graphData = hyper.readAllLines();
          this.g = new Digraph(graphData.length);
          Arrays.stream(graphData)
                 .map(x -> x.split(","))
                 .map(x -> Arrays.stream(x).map(y -> Integer.parseInt(y)).toArray(Integer[]::new))
                 .forEach(x -> {
-                    for (int i = 1; i < x.length; i++)
+                    for (int i = 1; i < x.length; i++) {
+                        System.out.println(x[0] + " " + x[1]);
                         g.addEdge(x[0], x[i]);
+                    }
                 });
          int noV = g.V();
          boolean rooted = false;
@@ -56,14 +70,14 @@ public class WordNet {
 
     // returns all WordNet nouns
     public Iterable<String> nouns() {
-        return table.keys();
+        return wordToNum.keys();
     }
 
     // is the word a WordNet noun?
     public boolean isNoun(String word) {
          if (word == null)
               throw new IllegalArgumentException();
-         return table.contains(word);
+         return wordToNum.contains(word);
     }
 
     // distance between nounA and nounB (defined below)
@@ -78,13 +92,22 @@ public class WordNet {
     public String sap(String nounA, String nounB) {
          if (nounA == null || nounB == null)
               throw new IllegalArgumentException();
-         return "";
+         SAP sap = new SAP(g);
+         int key = sap.ancestor(wordToNum.get(nounA), wordToNum.get(nounB));
+         System.out.println(key);
+         if (key < 0) throw new IllegalStateException();
+         List<String> synset = numToWord.get(key);
+         String out = "";
+         for (int i = 0; i < synset.size(); i++) out+= synset.get(i) + " ";
+         return out;
     }
 
     // do unit testing of this class
     public static void main(String[] args) {
         try {
             WordNet wn = new WordNet(args[0], args[1]);
+            String out = wn.sap("1840s", "A-line");
+            System.out.println(out);
         } catch (IllegalArgumentException e) {
             System.err.println(e);
         }
